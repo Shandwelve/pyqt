@@ -28,7 +28,7 @@ jobs:
       - name: Install project dependencies with uv
         run: uv sync
 
-      - run: pyinstaller main.py --onefile --windowed
+      - run: uv run pyinstaller main.py --onefile --windowed
 
       - name: Create GitHub Release
         id: create_release
