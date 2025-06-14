@@ -2,7 +2,7 @@ import os
 from typing import Optional
 
 from src.config import OUTPUT_PATH, STRATEGIES
-from src.schema import FileType, BillPosition
+from src.schema import BillPosition, FileType
 from src.services.pdf import PDFService
 
 
@@ -15,18 +15,22 @@ class ProcessorService:
         self.strategies = STRATEGIES
 
     def run(self) -> Optional[list[BillPosition]]:
-        # for file_type in FileType:
-        for file_type in [FileType.OCR_PDF]:
+        result = []
+        for file_type in FileType:
             for file in self.files:
                 text = self.get_pdf_content(file, file_type)
                 for strategy in self.strategies:
                     instance = strategy(text)
                     try:
-                        return instance.execute()
-                    except Exception as e:
-                        continue
-        return None
+                        data = instance.execute()
+                        if data:
+                            result += data
+                            break
 
+                    except:
+                        continue
+
+        return result or None
 
     def get_pdf_content(self, path: str, file_type: FileType) -> str:
         content = ""
@@ -42,9 +46,7 @@ class ProcessorService:
         os.makedirs(self.output_path, exist_ok=True)
         file_name = os.path.splitext(os.path.basename(path))[0]
         output_file = f"{file_name}_{file_type.value.lower()}.txt"
-        with open(os.path.join(self.output_path, output_file), "w", encoding="utf-8") as file:
+        with open(
+            os.path.join(self.output_path, output_file), "w", encoding="utf-8"
+        ) as file:
             file.write(content)
-
-
-
-

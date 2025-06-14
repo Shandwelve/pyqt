@@ -24,8 +24,9 @@ class PDFService:
                     full_text += line_text + "\n"
         return full_text
 
-
-    def parse_pdf(self, full_path: str, password: Optional[str] = None, sort=False) -> str:
+    def parse_pdf(
+        self, full_path: str, password: Optional[str] = None, sort: bool = False
+    ) -> str:
         try:
             doc = pymupdf.open(full_path)
             if password:

@@ -2,9 +2,9 @@ import datetime
 from typing import Optional
 
 import regex as re
+from dateutil import parser
 
 from src.schema import BillPosition
-from dateutil import parser
 
 
 class BaseStrategy:
@@ -18,59 +18,69 @@ class BaseStrategy:
     def date_pattern(self) -> re.Pattern[str]: ...
     def provider_pattern(self) -> re.Pattern[str]: ...
     def record_pattern(self) -> re.Pattern[str]: ...
+    def page_pattern(self) -> re.Pattern[str]: ...
 
     def execute(self) -> list[BillPosition]:
-        records = self.parse_records()
-        date = self.parse_date()
-        provider = self.parse_provider()
-        return [
-           BillPosition(
-               date=date,
-               provider=provider,
-               title=record["title"],
-               quantity=self.build_quantity(record),
-               total_price_no_vat=self.parse_number(record.get("total_price_no_vat", "0")),
-               total_price_vat=self.parse_number(record.get("total_price_no_vat", "0")),
-               total_vat=self.parse_number(record.get("total_vat", "0")),
-           )
-           for record in records
-       ]
+        result = []
+        for page in self.split_by_page():
+            try:
+                date = self.parse_date(page)
+                provider = self.parse_provider(page)
+                records = self.parse_records(page)
+                result += [
+                    BillPosition(
+                        date=date,
+                        provider=provider,
+                        title=record["title"],
+                        quantity=self.build_quantity(record),
+                        total_price_no_vat=self.parse_number(
+                            record.get("total_price_no_vat", "0")
+                        ),
+                        total_price_vat=self.parse_number(
+                            record.get("total_price_no_vat", "0")
+                        ),
+                        total_vat=self.parse_number(record.get("total_vat", "0")),
+                    )
+                    for record in records
+                ]
+            except Exception:
+                continue
+        return result
 
     def build_quantity(self, record: dict[str, str]) -> float:
         return self.parse_number(record.get("quantity", "0"))
 
-    def parse_records(self) -> list[dict[str, str]]:
+    def parse_records(self, page: str) -> list[dict[str, str]]:
         pattern = self.record_pattern()
         if pattern is Ellipsis or not pattern:
             raise ValueError("Missing record pattern")
-        matches = re.finditer(pattern, self.text, timeout=self.timeout)
+        matches = re.finditer(pattern, page, timeout=self.timeout, flags=re.IGNORECASE)
         result = []
         for match in matches:
             match.detach_string()
             result.append(match.groupdict())
         return result
 
-
-    def parse_date(self) -> datetime.date:
+    def parse_date(self, page: str) -> datetime.date:
         pattern = self.date_pattern()
         if pattern is Ellipsis or not pattern:
             raise ValueError("Missing date pattern")
-        date_match = re.search(pattern, self.text)
+        date_match = re.search(pattern, page, flags=re.IGNORECASE)
         if not date_match or not date_match.group("date"):
             raise ValueError("Can't parse date")
         try:
             return self.build_date(date_match.group("date"))
         except:
-            raise ValueError("Can't parse date")
+            return datetime.date.min
 
     def build_date(self, date: str) -> datetime.date:
         return parser.parse(date, dayfirst=self.day_first)
 
-    def parse_provider(self) -> str:
+    def parse_provider(self, page: str) -> str:
         pattern = self.provider_pattern()
         if pattern is Ellipsis or not pattern:
             raise ValueError("Missing provider pattern")
-        provider_match = re.search(pattern, self.text)
+        provider_match = re.search(pattern, page, flags=re.IGNORECASE)
         if not provider_match or not provider_match.group("provider"):
             raise ValueError("Can't parse provider")
         return provider_match.group("provider")
@@ -83,3 +93,10 @@ class BaseStrategy:
             processed_number = processed_number.replace(",", ".")
         float_number = float(processed_number)
         return -float_number if "-" in number else float_number
+
+    def split_by_page(self) -> list[str]:
+        page_pattern = self.page_pattern()
+        pages = [self.text]
+        if page_pattern is not Ellipsis and page_pattern:
+            pages = re.split(page_pattern, self.text, flags=re.IGNORECASE)
+        return pages

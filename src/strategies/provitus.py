@@ -11,11 +11,8 @@ class ProvitusStrategy(BaseStrategy):
     decimal_separator = ","
 
     def date_pattern(self) -> re.Pattern[str]:
-        date_format = r"(\d\d .+ 20\d\d)"
+        date_format = r"(\d{1,2} .+ 20\d\d)"
         return rf"(\n(?P<date>{date_format})\s?/\s?{date_format})"
-
-    # def provider_pattern(self) -> re.Pattern[str]:
-    #     return r"(?P<provider>SC(.+?),)"
 
     def record_pattern(self) -> re.Pattern[str]:
         number_pattern = r"(\s-?\d+(.?( |\.)\d+)*(\,\d+)?)"
@@ -25,5 +22,8 @@ class ProvitusStrategy(BaseStrategy):
         date = replace_romanian_months(date)
         return parser.parse(date, dayfirst=self.day_first)
 
-    def parse_provider(self) -> str:
+    def parse_provider(self, page: str) -> str:
         return "Provitus Grup"
+
+    def page_pattern(self) -> re.Pattern[str]:
+        return r"factura\s?fiscala seria"
