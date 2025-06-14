@@ -20,10 +20,9 @@ jobs:
           python-version: '3.9'
 
       - name: Clean PyInstaller cache
+        shell: pwsh
         run: |
-          rmdir /S /Q build || echo "No build dir"
-          rmdir /S /Q dist || echo "No dist dir"
-          del /F /Q main.spec || echo "No spec file"
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue build,dist,main.spec
 
       - name: Install uv (Windows)
         run: |
