@@ -1,24 +1,11 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel
 
-def main():
-   # Create the application instance
-   app = QApplication(sys.argv)
+from PyQt6.QtWidgets import QApplication
 
-   # Create the main window
-   window = QMainWindow()
-   window.setWindowTitle("Simple PyQt Example")
-   window.setGeometry(100, 100, 400, 200)
-
-   # Create a label widget
-   label = QLabel("Hello, PyQt!", window)
-   label.move(150, 80)
-
-   # Show the window
-   window.show()
-
-   # Execute the application
-   sys.exit(app.exec())
+from src.app import PDFSelectorApp
 
 if __name__ == "__main__":
-   main()
+    app = QApplication(sys.argv)
+    window = PDFSelectorApp()
+    window.show()
+    sys.exit(app.exec())

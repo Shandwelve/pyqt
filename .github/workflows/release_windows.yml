@@ -26,9 +26,12 @@ jobs:
           echo "${{ github.workspace }}\uv-bin" | Out-File -Append -Encoding ascii $env:GITHUB_PATH
 
       - name: Install project dependencies with uv
-        run: uv sync
+        run: uv sync --no-dev
 
-      - run: uv run pyinstaller main.py --onefile --windowed
+      - run: uv run --no-sync pyinstaller main.py --onefile --windowed
+
+      - name: Rename executable
+        run: Rename-Item -Path dist\main.exe -NewName application.exe
 
       - name: Create GitHub Release
         id: create_release
@@ -44,6 +47,6 @@ jobs:
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/main.exe
+          files: dist/application.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
