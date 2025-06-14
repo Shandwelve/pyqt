@@ -14,8 +14,8 @@ class ProvitusStrategy(BaseStrategy):
         date_format = r"(\d\d .+ 20\d\d)"
         return rf"(\n(?P<date>{date_format})\s?/\s?{date_format})"
 
-    def provider_pattern(self) -> re.Pattern[str]:
-        return r"(?P<provider>SC(.+?),)"
+    # def provider_pattern(self) -> re.Pattern[str]:
+    #     return r"(?P<provider>SC(.+?),)"
 
     def record_pattern(self) -> re.Pattern[str]:
         number_pattern = r"(\s-?\d+(.?( |\.)\d+)*(\,\d+)?)"
@@ -24,3 +24,6 @@ class ProvitusStrategy(BaseStrategy):
     def build_date(self, date: str) -> datetime.date:
         date = replace_romanian_months(date)
         return parser.parse(date, dayfirst=self.day_first)
+
+    def parse_provider(self) -> str:
+        return "Provitus Grup"

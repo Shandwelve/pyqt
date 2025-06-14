@@ -1,5 +1,6 @@
 import os
 import time
+from typing import Optional
 
 from openpyxl import Workbook
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
@@ -15,11 +16,12 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.schema import BillPosition
 from src.services.processor import ProcessorService
 
 
 class ProcessingThread(QThread):
-    finished = pyqtSignal(list)
+    finished = pyqtSignal(object)
 
     def __init__(self, files: list[str]) -> None:
         super().__init__()
@@ -27,10 +29,7 @@ class ProcessingThread(QThread):
         self.processor = ProcessorService(files, debug=os.environ.get("DEBUG", False))
 
     def run(self) -> None:
-        # Simulate long processing (e.g. extract data from PDFs)
-        result = self.processor.run()
-        # Here you could modify or extract data from self.files
-        self.finished.emit(self.files)
+        self.finished.emit(self.processor.run())
 
 
 class LoadingDialog(QDialog):
@@ -83,37 +82,62 @@ class PDFSelectorApp(QWidget):
             self.file_list.clear()
             self.file_list.addItems(files)
 
-            # Show loading dialog and run processing thread
             self.loading_dialog = LoadingDialog()
             self.thread = ProcessingThread(files)
             self.thread.finished.connect(self.processing_finished)
             self.thread.start()
             self.loading_dialog.exec()
 
-    def processing_finished(self, processed_files: list[str]) -> None:
+    def processing_finished(self, result: Optional[list[BillPosition]]) -> None:
         self.loading_dialog.close()
+
+        if result is None:
+            QMessageBox.critical(
+                self, "Error", "Data could not be processed from the selected files."
+            )
+            return
 
         save_path, _ = QFileDialog.getSaveFileName(
             self, "Save Excel File As", "output.xlsx", "Excel Files (*.xlsx)"
         )
 
         if save_path:
-            self.create_excel_file(processed_files, save_path)
+            self.create_excel_file(result, save_path)
             QMessageBox.information(
                 self, "Success", f"Excel file saved to:\n{save_path}"
             )
         else:
             QMessageBox.warning(self, "Canceled", "File save canceled.")
 
-    def create_excel_file(self, file_paths: list[str], output_path: str) -> None:
+    def create_excel_file(self, data: list[BillPosition], output_path: str) -> None:
         wb = Workbook()
         ws = wb.active
-        ws.title = "PDF Files"
+        ws.title = "Extracted Data"
 
-        ws.append(["Filename", "Full Path"])
-        for path in file_paths:
-            filename = path.split("/")[-1]
-            ws.append([filename, path])
+        ws.append(
+            [
+                "Provider",
+                "Title",
+                "Date",
+                "Quantity",
+                "Total No VAT",
+                "Total VAT",
+                "Total with VAT",
+            ]
+        )
+
+        for item in data:
+            ws.append(
+                [
+                    item["provider"],
+                    item["title"],
+                    item["date"].strftime("%Y-%m-%d") if item["date"] else "",
+                    item["quantity"],
+                    item["total_price_no_vat"],
+                    item["total_vat"],
+                    item["total_price_vat"],
+                ]
+            )
 
         wb.save(output_path)
 
