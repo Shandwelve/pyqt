@@ -28,7 +28,7 @@ jobs:
       - name: Install project dependencies with uv
         run: uv sync --no-dev
 
-      - run: uv run --no-sync pyinstaller main.py --onefile --windowed
+      - run: uv run --no-sync pyinstaller main.py --onefile --windowed --hidden-import=onnx.reference
 
       - name: Rename executable
         run: Rename-Item -Path dist\main.exe -NewName application.exe
