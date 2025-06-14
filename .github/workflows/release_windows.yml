@@ -19,14 +19,11 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install Rust (for uv)
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
-      - name: Install uv
-        run: cargo install uv
+      - name: Install uv (Windows)
+        run: |
+          Invoke-WebRequest -Uri https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip -OutFile uv.zip
+          Expand-Archive uv.zip -DestinationPath uv-bin
+          echo "${{ github.workspace }}\uv-bin" | Out-File -Append -Encoding ascii $env:GITHUB_PATH
 
       - name: Install project dependencies with uv
         run: uv sync
