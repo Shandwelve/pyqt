@@ -19,6 +19,12 @@ jobs:
         with:
           python-version: '3.9'
 
+      - name: Clean PyInstaller cache
+        run: |
+          rmdir /S /Q build || echo "No build dir"
+          rmdir /S /Q dist || echo "No dist dir"
+          del /F /Q main.spec || echo "No spec file"
+
       - name: Install uv (Windows)
         run: |
           Invoke-WebRequest -Uri https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip -OutFile uv.zip
@@ -28,7 +34,7 @@ jobs:
       - name: Install project dependencies with uv
         run: uv sync --no-dev
 
-      - run: uv run pyinstaller main.py --onefile --windowed
+      - run: uv run --no-sync --log-level=DEBUG pyinstaller main.py --onefile --windowed
 
       - name: Rename executable
         run: Rename-Item -Path dist\main.exe -NewName application.exe
