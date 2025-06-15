@@ -33,7 +33,7 @@ jobs:
       - name: Install project dependencies with uv
         run: uv sync --no-dev
 
-      - run: uv run --no-sync pyinstaller main.py --onefile --windowed --exclude-module onnx.reference --add-data "models;models"
+      - run: uv run --no-sync pyinstaller main.py --onefile --windowed --exclude-module onnx.reference --add-data "models;models" --icon=favicon.ico
 
       - name: Rename executable
         run: Rename-Item -Path dist\main.exe -NewName application.exe
