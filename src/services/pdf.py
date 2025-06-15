@@ -3,17 +3,15 @@ from typing import Optional
 
 import pymupdf
 import torch
+from doctr.io import DocumentFile
 from doctr.models import ocr_predictor
-
-from src.config import ROOT_PATH
 from doctr.models.detection import db_resnet50
 from doctr.models.recognition import crnn_vgg16_bn
-from doctr.io import DocumentFile
+
+from src.config import ROOT_PATH
 
 
 class PDFService:
-    root_path = ROOT_PATH
-
     def parse_pdf_ocr(self, full_path: str, password: Optional[str] = None) -> str:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         detection_model_path = os.path.join(ROOT_PATH, "models", "db_resnet50.pt")

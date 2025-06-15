@@ -16,7 +16,7 @@ class ProvitusStrategy(BaseStrategy):
 
     def record_pattern(self) -> re.Pattern[str]:
         number_pattern = r"(\s-?\d+(.?( |\.)\d+)*(\,\d+)?)"
-        return rf"(?P<title>.+?)(?P<measure_unit>\s.{{,5}})(?P<quantity>\s\d+).?(?P<unit_price>{number_pattern})?(?P<total_price_no_vat>{number_pattern})?(?P<vat_rate>\s\d+%)(?P<total_vat>{number_pattern})?(?P<total_price_vat>{number_pattern})?"
+        return rf"(?P<title>.+?)(?P<measure_unit>\s.{{,5}})(?P<quantity>\s\d+).?(?P<unit_price>{number_pattern})?(?P<total_price_no_vat>{number_pattern})?(?P<vat_rate>\s\d+%)(?P<total_vat>{number_pattern})?(?P<total_price_vat>{number_pattern})?"  # noqa: E501
 
     def build_date(self, date: str) -> datetime.date:
         date = replace_romanian_months(date)

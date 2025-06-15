@@ -16,15 +16,15 @@ class ProcessorService:
 
     def run(self) -> Optional[list[BillPosition]]:
         result = []
-        for file in self.files:
-            data = self.process_file(file)
+        for file_path in self.files:
+            data = self.process_file(file_path)
             if data:
                 result += data
         return result or None
 
-    def process_file(self, file) -> Optional[list[BillPosition]]:
+    def process_file(self, file_path: str) -> Optional[list[BillPosition]]:
         for file_type in FileType:
-            text = self.get_pdf_content(file, file_type)
+            text = self.get_pdf_content(file_path, file_type)
             for strategy in self.strategies:
                 instance = strategy(text)
                 try:

@@ -74,7 +74,6 @@ class PDFSelectorApp(QWidget):
 
         self.excel_service = ExcelService()
 
-
     def select_pdfs(self) -> None:
         files, _ = QFileDialog.getOpenFileNames(
             self, "Select PDF files", "", "PDF Files (*.pdf)"
@@ -110,4 +109,3 @@ class PDFSelectorApp(QWidget):
             )
         else:
             QMessageBox.warning(self, "Canceled", "File save canceled.")
-
