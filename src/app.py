@@ -1,7 +1,6 @@
 import os
 from typing import Optional
 
-from openpyxl import Workbook
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QDialog,
@@ -16,6 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.schema import BillPosition
+from src.services.excel import ExcelService
 from src.services.processor import ProcessorService
 
 
@@ -45,7 +45,7 @@ class LoadingDialog(QDialog):
         layout.addWidget(label)
 
         progress = QProgressBar()
-        progress.setRange(0, 0)  # infinite loading
+        progress.setRange(0, 0)
         layout.addWidget(progress)
 
         self.setLayout(layout)
@@ -71,6 +71,9 @@ class PDFSelectorApp(QWidget):
         layout.addWidget(self.select_button)
 
         self.setLayout(layout)
+
+        self.excel_service = ExcelService()
+
 
     def select_pdfs(self) -> None:
         files, _ = QFileDialog.getOpenFileNames(
@@ -101,41 +104,10 @@ class PDFSelectorApp(QWidget):
         )
 
         if save_path:
-            self.create_excel_file(result, save_path)
+            self.excel_service.create_invoice_file(result, save_path)
             QMessageBox.information(
                 self, "Success", f"Excel file saved to:\n{save_path}"
             )
         else:
             QMessageBox.warning(self, "Canceled", "File save canceled.")
 
-    def create_excel_file(self, data: list[BillPosition], output_path: str) -> None:
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Extracted Data"
-
-        ws.append(
-            [
-                "Provider",
-                "Title",
-                "Date",
-                "Quantity",
-                "Total No VAT",
-                "Total VAT",
-                "Total with VAT",
-            ]
-        )
-
-        for item in data:
-            ws.append(
-                [
-                    item["provider"],
-                    item["title"],
-                    item["date"].strftime("%Y-%m-%d") if item["date"] else "",
-                    item["quantity"],
-                    item["total_price_no_vat"],
-                    item["total_vat"],
-                    item["total_price_vat"],
-                ]
-            )
-
-        wb.save(output_path)
