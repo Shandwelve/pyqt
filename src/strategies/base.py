@@ -31,7 +31,7 @@ class BaseStrategy:
                     BillPosition(
                         date=date,
                         provider=provider,
-                        title=record["title"],
+                        title=record["title"].strip(),
                         quantity=self.build_quantity(record),
                         total_price_no_vat=self.parse_number(
                             record.get("total_price_no_vat", "0")

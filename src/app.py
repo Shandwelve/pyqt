@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtWidgets import (
     QDialog,
     QFileDialog,
@@ -37,7 +37,8 @@ class LoadingDialog(QDialog):
         self.setWindowTitle("Processing...")
         self.setModal(True)
         self.setFixedSize(300, 70)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint)
+
+        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint)
 
         layout = QVBoxLayout()
         label = QLabel("Processing files, please wait...")
@@ -49,6 +50,15 @@ class LoadingDialog(QDialog):
         layout.addWidget(progress)
 
         self.setLayout(layout)
+
+    def closeEvent(self, event):
+        event.ignore()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            event.ignore()
+        else:
+            super().keyPressEvent(event)
 
 
 class PDFSelectorApp(QWidget):
@@ -86,11 +96,20 @@ class PDFSelectorApp(QWidget):
             self.loading_dialog = LoadingDialog()
             self.thread = ProcessingThread(files)
             self.thread.finished.connect(self.processing_finished)
+
+            self.timeout_timer = QTimer(self)
+            self.timeout_timer.setSingleShot(True)
+            self.timeout_timer.setInterval(600_000)  # 10 minutes
+            self.timeout_timer.timeout.connect(self.processing_timeout)
+
             self.thread.start()
+            self.timeout_timer.start()
+
             self.loading_dialog.exec()
 
     def processing_finished(self, result: Optional[list[BillPosition]]) -> None:
-        self.loading_dialog.close()
+        self.timeout_timer.stop()
+        self.loading_dialog.accept()
 
         if result is None:
             QMessageBox.critical(
@@ -109,3 +128,15 @@ class PDFSelectorApp(QWidget):
             )
         else:
             QMessageBox.warning(self, "Canceled", "File save canceled.")
+
+    def processing_timeout(self) -> None:
+        if self.thread.isRunning():
+            self.thread.terminate()
+            self.thread.wait()
+
+        self.loading_dialog.accept()
+        QMessageBox.warning(
+            self,
+            "Timeout",
+            "Processing took too long and was canceled.",
+        )
